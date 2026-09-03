@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>U.S. Frost Dates & Freeze Risk | Chris Izworski</title>
+<meta name="description" content="Find first and last frost dates by U.S. location using NOAA climate normals, plus the current NWS seven-day freeze forecast.">
+<link rel="canonical" href="https://chrisizworski.com/national-tools/frost/"><meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="stylesheet" href="/assets/national-tools.css?v=20260901-placebar1">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Person","@id":"https://chrisizworski.com/#person","name":"Chris Izworski","url":"https://chrisizworski.com/"},{"@type":"WebSite","@id":"https://chrisizworski.com/#website","url":"https://chrisizworski.com/","name":"Chris Izworski","author":{"@id":"https://chrisizworski.com/#person"}},{"@type":"SoftwareApplication","@id":"https://chrisizworski.com/national-tools/frost/#page","url":"https://chrisizworski.com/national-tools/frost/","name":"First & Last Frost Dates by Location","description":"Find first and last frost dates by U.S. location using NOAA climate normals, plus the current NWS seven-day freeze forecast.","dateModified":"2026-09-01","author":{"@id":"https://chrisizworski.com/#person"},"isPartOf":{"@id":"https://chrisizworski.com/#website"}}]}</script>
+</head><body>
+<header class="site-head"><div class="wrap head-in"><a class="brand" href="/">Chris Izworski</a><nav class="nav" aria-label="Primary"><a href="/national-tools/">U.S. Outdoor Tools</a><a href="/tools/">Michigan Tools</a></nav></div></header>
+<main>
+<section class="hero"><div class="wrap"><div class="eyebrow">Frost Date Calculator · NOAA + NWS</div><h1>First & Last Frost Dates by Location</h1><p class="lede">Separate the historical freeze odds from the weather that is actually forecast for the next seven days.</p></div></section>
+<section class="section"><div class="wrap">
+<div class="tool-nav"><a href="/national-tools/">All U.S. tools</a><a href="/national-tools/planting/">Planting calendar</a><a href="/national-tools/rivers/">Rivers</a></div>
+<form id="loc" class="locator"><input aria-label="U.S. city or ZIP" placeholder="City or ZIP" required><button class="btn" type="submit">Check freeze risk</button><button type="button" class="secondary-btn geo-btn" data-use-location>Use my location</button></form><p class="near-me-note">Works anywhere in the United States: tap <strong>Use my location</strong> for conditions near me, or type any U.S. city or ZIP code.</p>
+<p class="location-privacy">Optional. Your browser shares a location rounded to about 0.001° only after you tap. It is used to load nearby conditions and is not included in analytics.</p><div class="status" aria-live="polite"></div>
+
+<div id="result" class="result" hidden>
+  <div class="result-head"><span class="pill">NOAA 1991–2020 climatology</span><span id="live-pill" class="pill"></span></div>
+  <div id="answer" class="answer"></div>
+  <div class="metrics">
+    <div class="metric"><b id="spring50">—</b><span>median last spring 32°F freeze · 50% threshold</span></div>
+    <div class="metric"><b id="fall50">—</b><span>median first fall 32°F freeze · 50% threshold</span></div>
+    <div class="metric"><b id="season50">—</b><span>median 32°F growing season</span></div>
+    <div class="metric"><b id="hardiness-zone">—</b><span>USDA hardiness zone · winter survival context</span></div>
+  </div>
+  <div class="decision-panel">
+    <h2>How cautious do you want to be in spring?</h2>
+    <div class="metrics">
+      <div class="metric"><b id="spring10">—</b><span>10% late-freeze threshold · more cautious than the median</span></div>
+    </div>
+    <p class="small">The median last-freeze date is not a guarantee of frost-free weather. The live forecast below should outrank the calendar for an immediate planting decision.</p>
+    <p id="zone-detail" class="small"></p>
+  </div>
+  <div class="decision-panel">
+    <h2>What the current forecast says</h2>
+    <div class="metrics">
+      <div class="metric"><b id="forecast-low">—</b><span>lowest hourly temperature · next 7 days</span></div>
+      <div class="metric"><b id="freeze-hours">—</b><span>hours at or below 32°F returned by NWS</span></div>
+      <div class="metric"><b id="hard-freeze-hours">—</b><span>hours at or below 28°F</span></div>
+    </div>
+    <p id="forecast-time" class="small"></p>
+  </div>
+  <p id="station" class="small"></p>
+  <p id="explain"></p>
+</div>
+
+<div id="mi" class="handoff" hidden><strong>Gardening in Michigan?</strong> The deeper <a href="/michigan-frost-dates/">Michigan Frost Dates</a> tool uses the established Michigan station network and local gardening pages.</div>
+</div></section>
+
+<section class="section"><div class="wrap grid">
+<div class="source-box"><h2>Frost dates and hardiness zones are different</h2><p>NOAA frost normals describe when 32°F freezes historically occur. The USDA hardiness zone describes average annual extreme winter minimum temperature and is mainly a perennial-survival guide. A zone does not tell you your last spring freeze or first fall freeze.</p><p>The zone shown here is the 2023 USDA majority zone for the resolved ZIP area, so local terrain and zone boundaries can still matter. <a href="https://phzm-prod.ars.usda.gov/">Open the official USDA map</a>.</p></div>
+<div class="source-box"><h2>Why station distance matters</h2><p>Freeze climatology comes from the nearest usable NOAA normals station. A distant station is useful regional context, but terrain, elevation, shoreline influence and cold-air drainage can make your yard different.</p><p>Sources: <a href="https://www.ncei.noaa.gov/products/land-based-station/us-climate-normals">NOAA NCEI Climate Normals</a> and <a href="https://www.weather.gov/documentation/services-web-API">NWS forecasts</a>.</p></div>
+</div></section>
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+ const N=window.NationalTools,form=document.getElementById("loc");
+ function fmtZone(value,tz,options){if(typeof N.fmtInZone==="function")return N.fmtInZone(value,tz,options);if(!value)return "Unknown";const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);try{return d.toLocaleString([],{...(options||{}),timeZone:tz||undefined})}catch(_){return d.toLocaleString([],options||{})}}
+ function dateLabel(mmdd){if(!mmdd)return "Unavailable";const [m,d]=mmdd.split("-").map(Number);return new Date(new Date().getFullYear(),m-1,d,12).toLocaleDateString([],{month:"short",day:"numeric"})}
+ async function run(loc){
+  const typed=form.querySelector("input").value||"";
+  const typedZip=(typed.match(/(?:^|\\D)(\\d{5})(?:-\\d{4})?(?:\\D|$)/)||[])[1]||"";
+  const zip=loc.postcode||typedZip;
+  const url="/api/national-frost?lat="+encodeURIComponent(loc.latitude)+"&lon="+encodeURIComponent(loc.longitude)+(zip?"&zip="+encodeURIComponent(zip):"");
+  const r=await fetch(url);
+  const x=typeof N.readJsonResponse==="function"?await N.readJsonResponse(r,"Frost data unavailable"):await r.json();
+  if(!r.ok)throw new Error(x.error||"Frost data unavailable");
+  document.getElementById("result").hidden=false;const c=x.climate_normals,w=x.current_forecast,v=x.freeze_verdict||{},z=x.hardiness_zone;
+  document.getElementById("answer").textContent=v.label+" near "+N.label(loc);
+  document.getElementById("spring10").textContent=dateLabel(c?.dates?.spring_10?.mmdd);
+  document.getElementById("spring50").textContent=dateLabel(c?.dates?.spring_50?.mmdd);
+  document.getElementById("fall50").textContent=dateLabel(c?.dates?.fall_50?.mmdd);
+  document.getElementById("season50").textContent=c?.growing_season_days_50==null?"Unavailable":Math.round(c.growing_season_days_50)+" days";
+  document.getElementById("hardiness-zone").textContent=z?.zone?"Zone "+z.zone:"Unavailable";
+  document.getElementById("zone-detail").textContent=z?.zone?("2023 USDA hardiness: "+z.class_label+" · ZIP "+z.zip+" · "+z.basis+". "+x.interpretation.hardiness):"USDA hardiness zone unavailable for this lookup. "+x.interpretation.hardiness;
+  document.getElementById("forecast-low").textContent=w?.min_7d_f==null?"Unavailable":Math.round(w.min_7d_f)+"°F";
+  document.getElementById("freeze-hours").textContent=w?.freeze_hours?.length??"—";
+  document.getElementById("hard-freeze-hours").textContent=w?.hard_freeze_hours?.length??"—";
+  document.getElementById("forecast-time").textContent=w?.min_7d_at?"Lowest returned hour: "+fmtZone(w.min_7d_at,x.location?.timeZone||loc.timeZone,{dateStyle:"medium",timeStyle:"short"}):"NWS hourly minimum time unavailable.";
+  const pill=document.getElementById("live-pill");pill.textContent=v.label||"Live forecast unavailable";pill.className="pill "+((v.level==="freeze"||v.level==="hard-freeze")?"danger":"");
+  document.getElementById("station").textContent=c?"NOAA normals station: "+c.name+(c.distance_miles==null?"":" · "+c.distance_miles.toFixed(1)+" mi away")+" · station confidence "+c.confidence:"NOAA station climatology unavailable for this lookup.";
+  document.getElementById("explain").textContent=c?.distance_miles>40?x.interpretation.station_distance:"Historical dates and the live seven-day forecast are intentionally separate. A forecast freeze overrides a comfortable-looking calendar date for the immediate decision.";
+  document.getElementById("mi").hidden=loc.stateCode!=="MI";
+ }
+ N.bind(form,run);const q=new URLSearchParams(location.search).get("q");if(q){form.querySelector("input").value=q;form.requestSubmit();}
+});
+</script>
+<section class="section"><div class="wrap">
+<h2>Frost date questions this tool answers</h2>
+<div class="grid">
+<div class="source-box"><h3>When is the first frost near me, or for my ZIP code?</h3><p>Type a city or ZIP code, or tap <strong>Use my location</strong>. The dates come from the nearest usable NOAA climate normals station, so the answer is station climatology for your area rather than a state-wide average.</p></div>
+<div class="source-box"><h3>What does a 10 percent or 50 percent freeze date actually mean?</h3><p>It is a historical frequency, not a schedule. The 50 percent last-spring-freeze date is the day by which half the years on record had seen their final 32°F freeze. The 10 percent date is the cautious end: only one year in ten had a freeze after it. Neither one promises anything about this year.</p></div>
+<div class="source-box"><h3>Is my hardiness zone the same as my frost date?</h3><p>No, and treating them as the same is the most common mistake here. A USDA zone describes the average annual coldest winter temperature, which is a survival question for perennials. It does not tell you your last spring freeze, your first fall freeze, or when it is safe to set out tomatoes.</p></div>
+<div class="source-box"><h3>Will it frost this week?</h3><p>The climatology answers a typical year. The seven-day NWS forecast on this page answers this week, including hours at or below 28°F for a hard freeze. For an immediate decision about covering plants, the live forecast should outrank the calendar every time.</p></div>
+<div class="source-box"><h3>Why does the reporting station distance matter?</h3><p>Freeze behavior is local. Elevation, a lakeshore, a valley bottom that pools cold air, or a city heat island can move a frost date by a week or more against a station a few miles away. The page shows how far the station is and how confident that fit is, so you can discount it when it is far.</p></div>
+<div class="source-box"><h3>Do frost dates change from year to year?</h3><p>The normals themselves update on NOAA's 30-year cycle, so they move slowly. Any single season can land well outside the window in either direction, which is exactly what the 10 and 90 percent dates are there to show.</p></div>
+</div>
+</div></section>
+</main>
+<footer class="footer"><div class="wrap">© 2026 <a href="/">Chris Izworski</a> · Public data turned into clearer outdoor decisions, with source and uncertainty shown.</div></footer>
+<script src="/assets/national-tools.js?v=20260901-placebar1"></script></body></html>

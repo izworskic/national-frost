@@ -31,7 +31,7 @@ test("editorial override keeps the quiet Michigan-style visual language", () => 
 });
 
 test("emitted page links its author and publisher to the canonical Person", () => {
-  const jsonLd = [...html.matchAll(/<script\\b(?=[^>]*type=["']application\\/ld\\+json["'])[^>]*>([\\s\\S]*?)<\\/script>/gi)]
+  const jsonLd = [...html.matchAll(/<script\b(?=[^>]*type=["']application\/ld\+json["'])[^>]*>([\s\S]*?)<\/script>/gi)]
     .map(([, source]) => JSON.parse(source));
   const graph = jsonLd.flatMap((document) => document["@graph"] || [document]);
   const personId = "https://chrisizworski.com/#person";

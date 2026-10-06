@@ -29,3 +29,19 @@ test("editorial override keeps the quiet Michigan-style visual language", () => 
   assert.match(css, /box-shadow:none/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient/);
 });
+
+test("emitted page links its author and publisher to the canonical Person", () => {
+  const jsonLd = [...html.matchAll(/<script\b(?=[^>]*type=["']application\/ld\+json["'])[^>]*>([\s\S]*?)<\/script>/gi)]
+    .map(([, source]) => JSON.parse(source));
+  const graph = jsonLd.flatMap((document) => document["@graph"] || [document]);
+  const personId = "https://chrisizworski.com/#person";
+  const person = graph.find((node) => node["@type"] === "Person" && node["@id"] === personId);
+  const website = graph.find((node) => node["@type"] === "WebSite" && node["@id"] === "https://chrisizworski.com/#website");
+  const app = graph.find((node) => node["@type"] === "SoftwareApplication" && node.url === "https://chrisizworski.com/national-tools/frost/");
+  assert.deepEqual({ name: person?.name, url: person?.url }, { name: "Chris Izworski", url: "https://chrisizworski.com/" });
+  assert.equal(website?.author?.["@id"], personId);
+  assert.equal(website?.publisher?.["@id"], personId);
+  assert.equal(app?.author?.["@id"], personId);
+  assert.equal(app?.publisher?.["@id"], personId);
+  assert.ok(html.includes('<link rel="canonical" href="https://chrisizworski.com/national-tools/frost/">'));
+});

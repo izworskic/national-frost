@@ -1,0 +1,10 @@
+const test=require("node:test"),assert=require("node:assert/strict"),E=require("../public/assets/frost-cover-engine.js");
+const at=new Date("2026-10-09T21:00:00-04:00");
+const data=temps=>({location:{timeZone:"America/New_York"},current_forecast:{updated_at:"2026-10-09T19:00:00-04:00",periods:temps.map((t,i)=>({time:new Date(Date.parse("2026-10-09T23:00:00-04:00")+i*3600000).toISOString(),temp_f:t,unit:"F"}))}});
+test("overnight spans midnight local",()=>assert.equal(E.overnight(data([35,34,33]).current_forecast.periods,at,"America/New_York").hours.length,3));
+test("tender crop cover warning begins before air freeze",()=>assert.equal(E.decide({crop:"tomato",stage:"mature",setting:"bed",protection:"sheet"},data([36,35]),at).code,"COVER"));
+test("hard freeze advises harvesting",()=>assert.equal(E.decide({crop:"pepper",setting:"bed"},data([27]),at).code,"HARVEST_MOVE"));
+test("pot on cool night moves",()=>assert.equal(E.decide({crop:"tomato",setting:"container"},data([35]),at).code,"MOVE"));
+test("hardy established kale not treated like tomato",()=>assert.equal(E.decide({crop:"kale",stage:"mature"},data([30]),at).code,"NO_COVER"));
+test("no hourly forecast means unknown",()=>assert.equal(E.decide({crop:"tomato"},null,at).code,"UNKNOWN"));
+test("stale forecast must not issue confident action",()=>{const f=data([27]);f.current_forecast.updated_at="2026-10-07T00:00:00-04:00";assert.equal(E.decide({crop:"tomato"},f,at).code,"STALE");});

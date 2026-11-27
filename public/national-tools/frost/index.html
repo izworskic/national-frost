@@ -403,17 +403,27 @@ body[data-editorial-tool-ui] :focus-visible{outline:3px solid var(--editorial-gr
 <script>
 document.addEventListener("DOMContentLoaded",function(){
  const N=window.NationalTools,form=document.getElementById("loc");
+ const result=document.getElementById("result"),mi=document.getElementById("mi");
+ let revision=0;
+ function invalidate(){revision++;result.hidden=true;mi.hidden=true;}
+ // A failed new lookup must not leave the previous location's advice active.
+ // Capture before the shared location handler starts its asynchronous lookup.
+ form.addEventListener("submit",invalidate,true);
+ form.querySelector("[data-use-location]")?.addEventListener("click",invalidate,true);
+
  function fmtZone(value,tz,options){if(typeof N.fmtInZone==="function")return N.fmtInZone(value,tz,options);if(!value)return "Unknown";const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);try{return d.toLocaleString([],{...(options||{}),timeZone:tz||undefined})}catch(_){return d.toLocaleString([],options||{})}}
  function dateLabel(mmdd){if(!mmdd)return "Unavailable";const [m,d]=mmdd.split("-").map(Number);return new Date(new Date().getFullYear(),m-1,d,12).toLocaleDateString([],{month:"short",day:"numeric"})}
  async function run(loc){
+  invalidate();const ticket=revision;
   const typed=form.querySelector("input").value||"";
   const typedZip=(typed.match(/(?:^|\\D)(\\d{5})(?:-\\d{4})?(?:\\D|$)/)||[])[1]||"";
   const zip=loc.postcode||typedZip;
   const url="/api/national-frost?lat="+encodeURIComponent(loc.latitude)+"&lon="+encodeURIComponent(loc.longitude)+(zip?"&zip="+encodeURIComponent(zip):"");
   const r=await fetch(url);
   const x=typeof N.readJsonResponse==="function"?await N.readJsonResponse(r,"Frost data unavailable"):await r.json();
+  if(ticket!==revision)return;
   if(!r.ok)throw new Error(x.error||"Frost data unavailable");
-  document.getElementById("result").hidden=false;const c=x.climate_normals,w=x.current_forecast,v=x.freeze_verdict||{},z=x.hardiness_zone;
+  const c=x.climate_normals,w=x.current_forecast,v=x.freeze_verdict||{},z=x.hardiness_zone;
   document.getElementById("answer").textContent=v.label+" near "+N.label(loc);
   document.getElementById("spring10").textContent=dateLabel(c?.dates?.spring_10?.mmdd);
   document.getElementById("spring50").textContent=dateLabel(c?.dates?.spring_50?.mmdd);
@@ -428,7 +438,7 @@ document.addEventListener("DOMContentLoaded",function(){
   const pill=document.getElementById("live-pill");pill.textContent=v.label||"Live forecast unavailable";pill.className="pill "+((v.level==="freeze"||v.level==="hard-freeze")?"danger":"");
   document.getElementById("station").textContent=c?"NOAA normals station: "+c.name+(c.distance_miles==null?"":" · "+c.distance_miles.toFixed(1)+" mi away")+" · station confidence "+c.confidence:"NOAA station climatology unavailable for this lookup.";
   document.getElementById("explain").textContent=c?.distance_miles>40?x.interpretation.station_distance:"Historical dates and the live seven-day forecast are intentionally separate. A forecast freeze overrides a comfortable-looking calendar date for the immediate decision.";
-  document.getElementById("mi").hidden=loc.stateCode!=="MI";
+  mi.hidden=loc.stateCode!=="MI";result.hidden=false;
  }
  N.bind(form,run);const q=new URLSearchParams(location.search).get("q");if(q){form.querySelector("input").value=q;form.requestSubmit();}
 });

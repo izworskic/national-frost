@@ -405,7 +405,13 @@ document.addEventListener("DOMContentLoaded",function(){
  const N=window.NationalTools,form=document.getElementById("loc");
  function fmtZone(value,tz,options){if(typeof N.fmtInZone==="function")return N.fmtInZone(value,tz,options);if(!value)return "Unknown";const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);try{return d.toLocaleString([],{...(options||{}),timeZone:tz||undefined})}catch(_){return d.toLocaleString([],options||{})}}
  function dateLabel(mmdd){if(!mmdd)return "Unavailable";const [m,d]=mmdd.split("-").map(Number);return new Date(new Date().getFullYear(),m-1,d,12).toLocaleDateString([],{month:"short",day:"numeric"})}
+ // Retire the previous decision before the shared geocoder starts a new lookup.
+ let decisionGeneration=0;
+ function invalidateDecision(){decisionGeneration++;document.getElementById("result").hidden=true;}
+ form.addEventListener("submit",invalidateDecision,true);
+ form.parentElement.addEventListener("click",e=>{if(e.target.closest("[data-use-location],[data-place-switch]"))invalidateDecision();},true);
  async function run(loc){
+  invalidateDecision();const ticket=decisionGeneration;
   const typed=form.querySelector("input").value||"";
   const typedZip=(typed.match(/(?:^|\\D)(\\d{5})(?:-\\d{4})?(?:\\D|$)/)||[])[1]||"";
   const zip=loc.postcode||typedZip;
@@ -413,7 +419,7 @@ document.addEventListener("DOMContentLoaded",function(){
   const r=await fetch(url);
   const x=typeof N.readJsonResponse==="function"?await N.readJsonResponse(r,"Frost data unavailable"):await r.json();
   if(!r.ok)throw new Error(x.error||"Frost data unavailable");
-  document.getElementById("result").hidden=false;const c=x.climate_normals,w=x.current_forecast,v=x.freeze_verdict||{},z=x.hardiness_zone;
+  if(ticket!==decisionGeneration)return;const c=x.climate_normals,w=x.current_forecast,v=x.freeze_verdict||{},z=x.hardiness_zone;
   document.getElementById("answer").textContent=v.label+" near "+N.label(loc);
   document.getElementById("spring10").textContent=dateLabel(c?.dates?.spring_10?.mmdd);
   document.getElementById("spring50").textContent=dateLabel(c?.dates?.spring_50?.mmdd);
@@ -429,6 +435,7 @@ document.addEventListener("DOMContentLoaded",function(){
   document.getElementById("station").textContent=c?"NOAA normals station: "+c.name+(c.distance_miles==null?"":" · "+c.distance_miles.toFixed(1)+" mi away")+" · station confidence "+c.confidence:"NOAA station climatology unavailable for this lookup.";
   document.getElementById("explain").textContent=c?.distance_miles>40?x.interpretation.station_distance:"Historical dates and the live seven-day forecast are intentionally separate. A forecast freeze overrides a comfortable-looking calendar date for the immediate decision.";
   document.getElementById("mi").hidden=loc.stateCode!=="MI";
+  document.getElementById("result").hidden=false;
  }
  N.bind(form,run);const q=new URLSearchParams(location.search).get("q");if(q){form.querySelector("input").value=q;form.requestSubmit();}
 });
